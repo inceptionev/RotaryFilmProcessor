@@ -1,6 +1,7 @@
 #include <M5Core2.h>
 #include <Tic.h>
 #include "Free_Fonts.h"
+#include "AtomSPK.h"
 
 //state planning
 //state 0, everything stopped, allows free-running drive, can edit settings
@@ -22,12 +23,13 @@ int nowTime = 0;
 int displayMin = 0;
 int displaySec = 0;
 char displayBuffer[10];
-int beepsCounter = 0;
+int beepStart = 0;
+int beepCounter = 0;
 
 int state = 0;
 int activeTimer = 4;  //default 4, free-running with no timer
 
-int timerA = 390;  //default timer settings in seconds
+int timerA = 40;  //default timer settings in seconds
 int timerB = 270;
 int timerC = 390;
 
@@ -35,10 +37,18 @@ int timerC = 390;
 TFT_eSprite disp_buffer = TFT_eSprite(&M5.Lcd);
 TFT_eSprite remain_buffer = TFT_eSprite(&M5.Lcd);
 
+ATOMSPK speaker;
+
+
 Button buttonFreeRun(0, 50, 240, 80);
 
 #define MOTOR_VELOCITY 2000000
 
+#define Speak_I2S_NUMBER I2S_NUM_0  
+#define MODE_MIC 0
+#define MODE_SPK 1
+#define DATA_SIZE 1024
+#define BEEP_NOTE 661
 #define BEEPS_30S 2
 #define BEEPS_20S 4
 #define BEEPS_10S 20
@@ -58,6 +68,10 @@ void setup() {
   // put your setup code here, to run once:
 
   M5.begin(true, false, true, true);  //Init M5Core, including i2c begin.  LCD on, SD card off, Serial on, I2C on
+
+  SpeakInit();
+
+  speaker.begin();
 
   M5.Lcd.setTextColor(TEXTCOLOR, BGCOLOR);
   M5.Lcd.setFreeFont(TITLE_FONT);
@@ -144,23 +158,44 @@ void loop() {
 
     case 2:
       if (countdown-(nowTime-startTime)/1000 < 30) {
+        beepStart = millis();
+        beepCounter = BEEPS_30S;
         state = 3;
       }
       break;
 
     case 3:
+      if (beepCounter > 0 && millis()-beepStart > BEEPS_INTERVAL) {
+        speaker.playBeep();
+        beepCounter--;
+        beepStart = millis();
+      }
       if (countdown-(nowTime-startTime)/1000 < 20) {
+        beepStart = millis();
+        beepCounter = BEEPS_20S;
         state = 4;
       }
       break;
 
     case 4:
+      if (beepCounter > 0 && millis()-beepStart > BEEPS_INTERVAL) {
+        speaker.playBeep();
+        beepCounter--;
+        beepStart = millis();
+      }
       if (countdown-(nowTime-startTime)/1000 < 10) {
+        beepStart = millis();
+        beepCounter = BEEPS_10S;
         state = 5;
       }
       break;
 
     case 5:
+      if (beepCounter > 0 && millis()-beepStart > BEEPS_INTERVAL) {
+        speaker.playBeep();
+        beepCounter--;
+        beepStart = millis();
+      }
       if (countdown*1000-(nowTime-startTime) < 0) {
         countdown = 0;
         tic.setTargetVelocity(0);
@@ -186,7 +221,7 @@ void loop() {
     disp_buffer.drawString(displayBuffer, 75, 0, GFXFF);
     disp_buffer.pushSprite(0, 70);
 
-    displayMin = floor((countdown-(nowTime-startTime)/(float)1000)/(float)60);
+    displayMin = constrain(floor((countdown-(nowTime-startTime)/(float)1000)/(float)60), 0, 100);
     displaySec = ceil(((countdown*1000-nowTime+startTime)%60000)/(float)1000);
     if (countdown == 0) {
       displayMin = 0;
@@ -246,4 +281,43 @@ void writeParam(int nParam, char* paramString, bool hl) {
       break;
 
   }
+}
+
+void SpeakInit(void){ // 初始化扬声器
+  M5.Axp.SetSpkEnable(true);  //启用扬声器电源
+  InitI2SSpeakOrMic(MODE_SPK);
+}
+
+bool InitI2SSpeakOrMic(int mode){  //Init I2S.  初始化I2S
+    esp_err_t err = ESP_OK;
+
+    i2s_driver_uninstall(Speak_I2S_NUMBER); // Uninstall the I2S driver.  卸载I2S驱动
+    i2s_config_t i2s_config = {
+        .mode = (i2s_mode_t)(I2S_MODE_MASTER),  // Set the I2S operating mode.  设置I2S工作模式
+        .sample_rate = 44100, // Set the I2S sampling rate.  设置I2S采样率
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, // Fixed 12-bit stereo MSB.  固定为12位立体声MSB
+        .channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT, // Set the channel format.  设置频道格式
+        .communication_format = I2S_COMM_FORMAT_I2S,  // Set the format of the communication.  设置通讯格式
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Set the interrupt flag.  设置中断的标志
+        .dma_buf_count = 2, //DMA buffer count.  DMA缓冲区计数
+        .dma_buf_len = 128, //DMA buffer length.  DMA缓冲区长度
+    };
+    if (mode == MODE_MIC){
+        i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
+    }else{
+        i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX);
+        i2s_config.use_apll = false;  //I2S clock setup.  I2S时钟设置
+        i2s_config.tx_desc_auto_clear = true; // Enables auto-cleanup descriptors for understreams.  开启欠流自动清除描述符
+    }
+    // Install and drive I2S.  安装并驱动I2S
+    err += i2s_driver_install(Speak_I2S_NUMBER, &i2s_config, 0, NULL);
+
+    i2s_pin_config_t tx_pin_config;
+    tx_pin_config.bck_io_num = CONFIG_I2S_BCK_PIN;  // Link the BCK to the CONFIG_I2S_BCK_PIN pin. 将BCK链接至CONFIG_I2S_BCK_PIN引脚
+    tx_pin_config.ws_io_num = CONFIG_I2S_LRCK_PIN;  //          ...
+    tx_pin_config.data_out_num = CONFIG_I2S_DATA_PIN;  //       ...
+    tx_pin_config.data_in_num = CONFIG_I2S_DATA_IN_PIN; //      ...
+    err += i2s_set_pin(Speak_I2S_NUMBER, &tx_pin_config); // Set the I2S pin number.  设置I2S引脚编号
+    err += i2s_set_clk(Speak_I2S_NUMBER, 44100, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO); // Set the clock and bitwidth used by I2S Rx and Tx. 设置I2S RX、Tx使用的时钟和位宽
+    return true;
 }
