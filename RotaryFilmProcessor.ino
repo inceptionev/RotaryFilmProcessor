@@ -125,6 +125,10 @@ void loop() {
         tic.setTargetVelocity(MOTOR_VELOCITY);
         state = 1; 
         } else if (M5.BtnA.wasReleased()) {
+          writeParam(3, (char*)"  ", false);
+          writeParam(5, (char*)"  ", false);
+          writeParam(2, (char*)"     ", false);
+          writeParam(4, (char*)"     ", false);
           stopwatch = 0;
           countdown = timerA;
           state = 2;
@@ -132,6 +136,10 @@ void loop() {
           runMotor = true;
           startTime = millis();
         } else if (M5.BtnB.wasReleased()) {
+          writeParam(1, (char*)"  ", false);
+          writeParam(5, (char*)"  ", false);
+          writeParam(0, (char*)"     ", false);
+          writeParam(4, (char*)"     ", false);
           stopwatch = 0;
           countdown = timerB;
           state = 2;
@@ -139,6 +147,10 @@ void loop() {
           runMotor = true;
           startTime = millis();
         } else if (M5.BtnC.wasReleased()) {
+          writeParam(3, (char*)"  ", false);
+          writeParam(1, (char*)"  ", false);
+          writeParam(2, (char*)"     ", false);
+          writeParam(0, (char*)"     ", false);
           stopwatch = 0;
           countdown = timerC;
           state = 2;
@@ -197,6 +209,15 @@ void loop() {
         beepStart = millis();
       }
       if (countdown*1000-(nowTime-startTime) < 0) {
+        writeParam(1, (char*)"A", false);
+        writeParam(3, (char*)"B", false);
+        writeParam(5, (char*)"C", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        writeParam(0, displayBuffer, false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
+        writeParam(2, displayBuffer, false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
+        writeParam(4, displayBuffer, false);
         countdown = 0;
         tic.setTargetVelocity(0);
         runMotor = false;
@@ -246,38 +267,32 @@ void writeParam(int nParam, char* paramString, bool hl) {
   switch(nParam) {
     case 0: //Column 1 Top
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.setCursor(30,206);
-      M5.Lcd.print(paramString);
+      M5.Lcd.drawString(paramString, 30, 196, GFXFF);
       break;
 
     case 1: //Column 1 Bottom
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.setCursor(48,230);
-      M5.Lcd.print(paramString);
+      M5.Lcd.drawString(paramString, 48, 220, GFXFF);
       break;
 
     case 2: //Column 2 Top
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.setCursor(133,206);
-      M5.Lcd.print(paramString);
+      M5.Lcd.drawString(paramString, 133, 196, GFXFF);
       break;
 
     case 3: //Column 2 Bottom
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.setCursor(153,230);
-      M5.Lcd.print(paramString);
+      M5.Lcd.drawString(paramString, 153, 220, GFXFF);
       break;
 
     case 4: //Column 3 Top
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.setCursor(241,206);
-      M5.Lcd.print(paramString);
+      M5.Lcd.drawString(paramString, 241, 196, GFXFF);
       break;
 
     case 5: //Column 3 Bottom
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.setCursor(259,230);
-      M5.Lcd.print(paramString);
+      M5.Lcd.drawString(paramString, 259, 220, GFXFF);
       break;
 
   }
