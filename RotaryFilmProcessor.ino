@@ -68,6 +68,7 @@ Button buttonFreeRun(0, 50, 320, 80);
 #define HLCOLOR BLUE
 
 #define LONG_PRESS 1000 //in ms
+#define LONG_REPEAT 200
 #define TIMER_INCREMENT 5
 
 void setup() {
@@ -109,11 +110,11 @@ void setup() {
   writeParam(1, (char*)" A ", false);
   writeParam(3, (char*)" B ", false);
   writeParam(5, (char*)" C ", false);
-  sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+  sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
   writeParam(0, displayBuffer, false);
-  sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
+  sprintf(displayBuffer," %d:%02d ", int(floor(timerB/60)), int(timerB%60));
   writeParam(2, displayBuffer, false);
-  sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
+  sprintf(displayBuffer," %d:%02d ", int(floor(timerC/60)), int(timerC%60));
   writeParam(4, displayBuffer, false);
 }
 
@@ -134,10 +135,10 @@ void loop() {
         tic.setTargetVelocity(MOTOR_VELOCITY);
         state = 1; 
       } else if (M5.BtnA.pressedFor(LONG_PRESS)) {
-        writeParam(1, (char*)"-", false);
+        writeParam(1, (char*)" - ", false);
         writeParam(3, (char*)"OK", false);
-        writeParam(5, (char*)"+", false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        writeParam(5, (char*)" + ", false);
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, true);
         state = 6; 
       } else if (M5.BtnA.wasReleased()) {
@@ -228,11 +229,11 @@ void loop() {
         writeParam(1, (char*)" A ", false);
         writeParam(3, (char*)" B ", false);
         writeParam(5, (char*)" C ", false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerB/60)), int(timerB%60));
         writeParam(2, displayBuffer, false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerC/60)), int(timerC%60));
         writeParam(4, displayBuffer, false);
         countdown = 0;
         tic.setTargetVelocity(0);
@@ -242,11 +243,19 @@ void loop() {
       break;
 
     case 6:
-      if (M5.BtnB.wasReleased()) {
+      if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+        timerA -= TIMER_INCREMENT;
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        writeParam(0, displayBuffer, true);
+      } else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+        timerA += TIMER_INCREMENT;
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        writeParam(0, displayBuffer, true);
+      } else if (M5.BtnB.wasReleased()) {
         writeParam(1, (char*)" A ", false);
         writeParam(3, (char*)" B ", false);
         writeParam(5, (char*)" C ", false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, false);
         state = 0;
       }
