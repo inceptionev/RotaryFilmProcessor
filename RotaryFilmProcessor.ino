@@ -53,6 +53,9 @@ Button buttonFreeRun(0, 50, 240, 80);
 #define BEEPS_20S 4
 #define BEEPS_10S 20
 #define BEEPS_INTERVAL 500
+#define BEEPS_INTERVAL_30S 2000
+#define BEEPS_INTERVAL_20S 1000
+#define BEEPS_INTERVAL_10S 500
 
 #define BGCOLOR BLACK
 #define TEXTCOLOR WHITE
@@ -169,7 +172,7 @@ void loop() {
       break;
 
     case 2:
-      if (countdown-(nowTime-startTime)/1000 < 30) {
+      if (countdown-(nowTime-startTime)/1000 <= 30) {
         beepStart = millis();
         beepCounter = BEEPS_30S;
         state = 3;
@@ -177,12 +180,12 @@ void loop() {
       break;
 
     case 3:
-      if (beepCounter > 0 && millis()-beepStart > BEEPS_INTERVAL) {
+      if (millis()-beepStart > BEEPS_INTERVAL_30S) {
         speaker.playBeep();
         beepCounter--;
         beepStart = millis();
       }
-      if (countdown-(nowTime-startTime)/1000 < 20) {
+      if (countdown-(nowTime-startTime)/1000 <= 20) {
         beepStart = millis();
         beepCounter = BEEPS_20S;
         state = 4;
@@ -190,12 +193,12 @@ void loop() {
       break;
 
     case 4:
-      if (beepCounter > 0 && millis()-beepStart > BEEPS_INTERVAL) {
+      if (millis()-beepStart > BEEPS_INTERVAL_20S) {
         speaker.playBeep();
         beepCounter--;
         beepStart = millis();
       }
-      if (countdown-(nowTime-startTime)/1000 < 10) {
+      if (countdown-(nowTime-startTime)/1000 <= 10) {
         beepStart = millis();
         beepCounter = BEEPS_10S;
         state = 5;
@@ -203,7 +206,7 @@ void loop() {
       break;
 
     case 5:
-      if (beepCounter > 0 && millis()-beepStart > BEEPS_INTERVAL) {
+      if (millis()-beepStart > BEEPS_INTERVAL_10S) {
         speaker.playBeep();
         beepCounter--;
         beepStart = millis();
