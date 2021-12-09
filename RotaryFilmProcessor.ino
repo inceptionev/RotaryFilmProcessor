@@ -25,6 +25,7 @@ int displaySec = 0;
 char displayBuffer[10];
 int beepStart = 0;
 int beepCounter = 0;
+bool oneShot = false;
 
 int state = 0;
 int activeTimer = 4;  //default 4, free-running with no timer
@@ -110,11 +111,11 @@ void setup() {
   writeParam(1, (char*)" A ", false);
   writeParam(3, (char*)" B ", false);
   writeParam(5, (char*)" C ", false);
-  sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+  sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
   writeParam(0, displayBuffer, false);
-  sprintf(displayBuffer," %d:%02d ", int(floor(timerB/60)), int(timerB%60));
+  sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
   writeParam(2, displayBuffer, false);
-  sprintf(displayBuffer," %d:%02d ", int(floor(timerC/60)), int(timerC%60));
+  sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
   writeParam(4, displayBuffer, false);
 }
 
@@ -138,14 +139,15 @@ void loop() {
         writeParam(1, (char*)" - ", false);
         writeParam(3, (char*)"OK", false);
         writeParam(5, (char*)" + ", false);
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, true);
+        oneShot = false;
         state = 6; 
       } else if (M5.BtnA.wasReleased()) {
         writeParam(3, (char*)"   ", false);
         writeParam(5, (char*)"   ", false);
-        writeParam(2, (char*)"     ", false);
-        writeParam(4, (char*)"     ", false);
+        writeParam(2, (char*)"      ", false);
+        writeParam(4, (char*)"      ", false);
         stopwatch = 0;
         countdown = timerA;
         state = 2;
@@ -155,8 +157,8 @@ void loop() {
       } else if (M5.BtnB.wasReleased()) {
         writeParam(1, (char*)"   ", false);
         writeParam(5, (char*)"   ", false);
-        writeParam(0, (char*)"     ", false);
-        writeParam(4, (char*)"     ", false);
+        writeParam(0, (char*)"      ", false);
+        writeParam(4, (char*)"      ", false);
         stopwatch = 0;
         countdown = timerB;
         state = 2;
@@ -166,8 +168,8 @@ void loop() {
       } else if (M5.BtnC.wasReleased()) {
         writeParam(3, (char*)"   ", false);
         writeParam(1, (char*)"   ", false);
-        writeParam(2, (char*)"     ", false);
-        writeParam(0, (char*)"     ", false);
+        writeParam(2, (char*)"      ", false);
+        writeParam(0, (char*)"      ", false);
         stopwatch = 0;
         countdown = timerC;
         state = 2;
@@ -229,11 +231,11 @@ void loop() {
         writeParam(1, (char*)" A ", false);
         writeParam(3, (char*)" B ", false);
         writeParam(5, (char*)" C ", false);
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, false);
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerB/60)), int(timerB%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
         writeParam(2, displayBuffer, false);
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerC/60)), int(timerC%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
         writeParam(4, displayBuffer, false);
         countdown = 0;
         tic.setTargetVelocity(0);
@@ -243,19 +245,22 @@ void loop() {
       break;
 
     case 6:
-      if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+      if(!oneShot) {  //to consume the first release
+        if (M5.BtnA.wasReleased()) { oneShot = true; }        
+      } else if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(LONG_PRESS, LONG_REPEAT)) {
         timerA -= TIMER_INCREMENT;
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        timerA = (timerA < 0) ? 0 : timerA;
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, true);
       } else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(LONG_PRESS, LONG_REPEAT)) {
         timerA += TIMER_INCREMENT;
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, true);
       } else if (M5.BtnB.wasReleased()) {
         writeParam(1, (char*)" A ", false);
         writeParam(3, (char*)" B ", false);
         writeParam(5, (char*)" C ", false);
-        sprintf(displayBuffer," %d:%02d ", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, false);
         state = 0;
       }
@@ -284,7 +289,7 @@ void loop() {
     remain_buffer.setFreeFont(REMAIN_FONT);
     remain_buffer.setTextColor(REMAINCOLOR, BGCOLOR);
     sprintf(displayBuffer,"-%d:%02d ",displayMin, displaySec);
-    remain_buffer.drawString(displayBuffer, 160, 0, GFXFF);
+    remain_buffer.drawString(displayBuffer, 150, 0, GFXFF);
     remain_buffer.pushSprite(0, 145);
 
   }
