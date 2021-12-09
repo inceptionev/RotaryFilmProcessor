@@ -40,7 +40,7 @@ TFT_eSprite remain_buffer = TFT_eSprite(&M5.Lcd);
 ATOMSPK speaker;
 
 
-Button buttonFreeRun(0, 50, 240, 80);
+Button buttonFreeRun(0, 50, 320, 80);
 
 #define MOTOR_VELOCITY 2000000
 
@@ -67,6 +67,9 @@ Button buttonFreeRun(0, 50, 240, 80);
 #define PARAM_FONT FMB12
 #define HLCOLOR BLUE
 
+#define LONG_PRESS 1000 //in ms
+#define TIMER_INCREMENT 5
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -76,9 +79,10 @@ void setup() {
 
   speaker.begin();
 
+  M5.Lcd.setTextDatum(TC_DATUM);
   M5.Lcd.setTextColor(TEXTCOLOR, BGCOLOR);
   M5.Lcd.setFreeFont(TITLE_FONT);
-  M5.Lcd.drawString("Rotary Processor", 50, 10, GFXFF);
+  M5.Lcd.drawString("Rotary Processor", 160, 10, GFXFF);
 
   delay(20);
   tic.setTargetVelocity(0);
@@ -86,23 +90,25 @@ void setup() {
 
   M5.update(); //clear any remaining button presses
 
+  disp_buffer.setTextDatum(TC_DATUM);
   disp_buffer.setSwapBytes(false);
-  disp_buffer.createSprite(240, 40);
+  disp_buffer.createSprite(320, 40);
 
+  remain_buffer.setTextDatum(TC_DATUM);
   remain_buffer.setSwapBytes(false);
-  remain_buffer.createSprite(240, 30);
+  remain_buffer.createSprite(320, 30);
 
   M5.Lcd.setTextColor(ELAPSEDCOLOR, BGCOLOR);
   M5.Lcd.setFreeFont(PARAM_FONT);
-  M5.Lcd.drawString("ELAPSED", 110, 45, GFXFF);
+  M5.Lcd.drawString("ELAPSED", 160, 45, GFXFF);
   
   M5.Lcd.setTextColor(REMAINCOLOR, BGCOLOR);
   M5.Lcd.setFreeFont(PARAM_FONT);
-  M5.Lcd.drawString("REMAIN", 118, 120, GFXFF);
+  M5.Lcd.drawString("REMAIN", 160, 120, GFXFF);
   
-  writeParam(1, (char*)"A", false);
-  writeParam(3, (char*)"B", false);
-  writeParam(5, (char*)"C", false);
+  writeParam(1, (char*)" A ", false);
+  writeParam(3, (char*)" B ", false);
+  writeParam(5, (char*)" C ", false);
   sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
   writeParam(0, displayBuffer, false);
   sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
@@ -127,40 +133,47 @@ void loop() {
         stopwatch = 0; 
         tic.setTargetVelocity(MOTOR_VELOCITY);
         state = 1; 
-        } else if (M5.BtnA.wasReleased()) {
-          writeParam(3, (char*)"  ", false);
-          writeParam(5, (char*)"  ", false);
-          writeParam(2, (char*)"     ", false);
-          writeParam(4, (char*)"     ", false);
-          stopwatch = 0;
-          countdown = timerA;
-          state = 2;
-          tic.setTargetVelocity(MOTOR_VELOCITY);
-          runMotor = true;
-          startTime = millis();
-        } else if (M5.BtnB.wasReleased()) {
-          writeParam(1, (char*)"  ", false);
-          writeParam(5, (char*)"  ", false);
-          writeParam(0, (char*)"     ", false);
-          writeParam(4, (char*)"     ", false);
-          stopwatch = 0;
-          countdown = timerB;
-          state = 2;
-          tic.setTargetVelocity(MOTOR_VELOCITY);
-          runMotor = true;
-          startTime = millis();
-        } else if (M5.BtnC.wasReleased()) {
-          writeParam(3, (char*)"  ", false);
-          writeParam(1, (char*)"  ", false);
-          writeParam(2, (char*)"     ", false);
-          writeParam(0, (char*)"     ", false);
-          stopwatch = 0;
-          countdown = timerC;
-          state = 2;
-          tic.setTargetVelocity(MOTOR_VELOCITY);
-          runMotor = true;
-          startTime = millis();
-        }
+      } else if (M5.BtnA.pressedFor(LONG_PRESS)) {
+        writeParam(1, (char*)"-", false);
+        writeParam(3, (char*)"OK", false);
+        writeParam(5, (char*)"+", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        writeParam(0, displayBuffer, true);
+        state = 6; 
+      } else if (M5.BtnA.wasReleased()) {
+        writeParam(3, (char*)"   ", false);
+        writeParam(5, (char*)"   ", false);
+        writeParam(2, (char*)"     ", false);
+        writeParam(4, (char*)"     ", false);
+        stopwatch = 0;
+        countdown = timerA;
+        state = 2;
+        tic.setTargetVelocity(MOTOR_VELOCITY);
+        runMotor = true;
+        startTime = millis();
+      } else if (M5.BtnB.wasReleased()) {
+        writeParam(1, (char*)"   ", false);
+        writeParam(5, (char*)"   ", false);
+        writeParam(0, (char*)"     ", false);
+        writeParam(4, (char*)"     ", false);
+        stopwatch = 0;
+        countdown = timerB;
+        state = 2;
+        tic.setTargetVelocity(MOTOR_VELOCITY);
+        runMotor = true;
+        startTime = millis();
+      } else if (M5.BtnC.wasReleased()) {
+        writeParam(3, (char*)"   ", false);
+        writeParam(1, (char*)"   ", false);
+        writeParam(2, (char*)"     ", false);
+        writeParam(0, (char*)"     ", false);
+        stopwatch = 0;
+        countdown = timerC;
+        state = 2;
+        tic.setTargetVelocity(MOTOR_VELOCITY);
+        runMotor = true;
+        startTime = millis();
+      }
       break;
 
     case 1:
@@ -212,9 +225,9 @@ void loop() {
         beepStart = millis();
       }
       if (countdown*1000-(nowTime-startTime) < 0) {
-        writeParam(1, (char*)"A", false);
-        writeParam(3, (char*)"B", false);
-        writeParam(5, (char*)"C", false);
+        writeParam(1, (char*)" A ", false);
+        writeParam(3, (char*)" B ", false);
+        writeParam(5, (char*)" C ", false);
         sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, false);
         sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
@@ -229,6 +242,14 @@ void loop() {
       break;
 
     case 6:
+      if (M5.BtnB.wasReleased()) {
+        writeParam(1, (char*)" A ", false);
+        writeParam(3, (char*)" B ", false);
+        writeParam(5, (char*)" C ", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        writeParam(0, displayBuffer, false);
+        state = 0;
+      }
       break;
 
     default:
@@ -242,7 +263,7 @@ void loop() {
     disp_buffer.setFreeFont(ELAPSED_FONT);
     disp_buffer.setTextColor(ELAPSEDCOLOR, BGCOLOR);
     sprintf(displayBuffer,"%d:%04.1f ",displayMin,((nowTime-startTime)%60000)/(float)1000);
-    disp_buffer.drawString(displayBuffer, 75, 0, GFXFF);
+    disp_buffer.drawString(displayBuffer, 160, 0, GFXFF);
     disp_buffer.pushSprite(0, 70);
 
     displayMin = constrain(floor((countdown-(nowTime-startTime)/(float)1000)/(float)60), 0, 100);
@@ -254,7 +275,7 @@ void loop() {
     remain_buffer.setFreeFont(REMAIN_FONT);
     remain_buffer.setTextColor(REMAINCOLOR, BGCOLOR);
     sprintf(displayBuffer,"-%d:%02d ",displayMin, displaySec);
-    remain_buffer.drawString(displayBuffer, 100, 0, GFXFF);
+    remain_buffer.drawString(displayBuffer, 160, 0, GFXFF);
     remain_buffer.pushSprite(0, 145);
 
   }
@@ -270,7 +291,7 @@ void writeParam(int nParam, char* paramString, bool hl) {
   switch(nParam) {
     case 0: //Column 1 Top
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.drawString(paramString, 30, 196, GFXFF);
+      M5.Lcd.drawString(paramString, 50, 196, GFXFF);
       break;
 
     case 1: //Column 1 Bottom
@@ -280,22 +301,22 @@ void writeParam(int nParam, char* paramString, bool hl) {
 
     case 2: //Column 2 Top
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.drawString(paramString, 133, 196, GFXFF);
+      M5.Lcd.drawString(paramString, 159, 196, GFXFF);
       break;
 
     case 3: //Column 2 Bottom
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.drawString(paramString, 153, 220, GFXFF);
+      M5.Lcd.drawString(paramString, 155, 220, GFXFF);
       break;
 
     case 4: //Column 3 Top
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.drawString(paramString, 241, 196, GFXFF);
+      M5.Lcd.drawString(paramString, 270, 196, GFXFF);
       break;
 
     case 5: //Column 3 Bottom
       hl ? M5.Lcd.setTextColor(WHITE, HLCOLOR) : M5.Lcd.setTextColor(WHITE, BGCOLOR);
-      M5.Lcd.drawString(paramString, 259, 220, GFXFF);
+      M5.Lcd.drawString(paramString, 258, 220, GFXFF);
       break;
 
   }
