@@ -135,7 +135,7 @@ void loop() {
         stopwatch = 0; 
         tic.setTargetVelocity(MOTOR_VELOCITY);
         state = 1; 
-      } else if (M5.BtnA.pressedFor(LONG_PRESS)) {
+      } else if (M5.BtnA.pressedFor(LONG_PRESS) {
         writeParam(1, (char*)" - ", false);
         writeParam(3, (char*)"OK", false);
         writeParam(5, (char*)" + ", false);
@@ -143,6 +143,22 @@ void loop() {
         writeParam(0, displayBuffer, true);
         oneShot = false;
         state = 6; 
+      } else if (M5.BtnB.pressedFor(LONG_PRESS) {
+        writeParam(1, (char*)" - ", false);
+        writeParam(3, (char*)"OK", false);
+        writeParam(5, (char*)" + ", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        writeParam(2, displayBuffer, true);
+        oneShot = false;
+        state = 7; 
+      } else if (M5.BtnC.pressedFor(LONG_PRESS) {
+        writeParam(1, (char*)" - ", false);
+        writeParam(3, (char*)"OK", false);
+        writeParam(5, (char*)" + ", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        writeParam(4, displayBuffer, true);
+        oneShot = false;
+        state = 8; 
       } else if (M5.BtnA.wasReleased()) {
         writeParam(3, (char*)"   ", false);
         writeParam(5, (char*)"   ", false);
