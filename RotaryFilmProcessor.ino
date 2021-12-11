@@ -135,7 +135,7 @@ void loop() {
         stopwatch = 0; 
         tic.setTargetVelocity(MOTOR_VELOCITY);
         state = 1; 
-      } else if (M5.BtnA.pressedFor(LONG_PRESS) {
+      } else if (M5.BtnA.pressedFor(LONG_PRESS)) {
         writeParam(1, (char*)" - ", false);
         writeParam(3, (char*)"OK", false);
         writeParam(5, (char*)" + ", false);
@@ -143,19 +143,19 @@ void loop() {
         writeParam(0, displayBuffer, true);
         oneShot = false;
         state = 6; 
-      } else if (M5.BtnB.pressedFor(LONG_PRESS) {
+      } else if (M5.BtnB.pressedFor(LONG_PRESS)) {
         writeParam(1, (char*)" - ", false);
         writeParam(3, (char*)"OK", false);
         writeParam(5, (char*)" + ", false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
         writeParam(2, displayBuffer, true);
         oneShot = false;
         state = 7; 
-      } else if (M5.BtnC.pressedFor(LONG_PRESS) {
+      } else if (M5.BtnC.pressedFor(LONG_PRESS)) {
         writeParam(1, (char*)" - ", false);
         writeParam(3, (char*)"OK", false);
         writeParam(5, (char*)" + ", false);
-        sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
         writeParam(4, displayBuffer, true);
         oneShot = false;
         state = 8; 
@@ -278,6 +278,50 @@ void loop() {
         writeParam(5, (char*)" C ", false);
         sprintf(displayBuffer,"%d:%02d", int(floor(timerA/60)), int(timerA%60));
         writeParam(0, displayBuffer, false);
+        state = 0;
+      }
+      break;
+
+    case 7:
+      if(!oneShot) {  //to consume the first release
+        if (M5.BtnB.wasReleased()) { oneShot = true; }        
+      } else if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+        timerB -= TIMER_INCREMENT;
+        timerB = (timerB < 0) ? 0 : timerB;
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
+        writeParam(2, displayBuffer, true);
+      } else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+        timerB += TIMER_INCREMENT;
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
+        writeParam(2, displayBuffer, true);
+      } else if (M5.BtnB.wasReleased()) {
+        writeParam(1, (char*)" A ", false);
+        writeParam(3, (char*)" B ", false);
+        writeParam(5, (char*)" C ", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerB/60)), int(timerB%60));
+        writeParam(2, displayBuffer, false);
+        state = 0;
+      }
+      break;
+
+    case 8:
+      if(!oneShot) {  //to consume the first release
+        if (M5.BtnC.wasReleased()) { oneShot = true; }        
+      } else if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+        timerC -= TIMER_INCREMENT;
+        timerC = (timerC < 0) ? 0 : timerC;
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
+        writeParam(4, displayBuffer, true);
+      } else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(LONG_PRESS, LONG_REPEAT)) {
+        timerC += TIMER_INCREMENT;
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
+        writeParam(4, displayBuffer, true);
+      } else if (M5.BtnB.wasReleased()) {
+        writeParam(1, (char*)" A ", false);
+        writeParam(3, (char*)" B ", false);
+        writeParam(5, (char*)" C ", false);
+        sprintf(displayBuffer,"%d:%02d", int(floor(timerC/60)), int(timerC%60));
+        writeParam(4, displayBuffer, false);
         state = 0;
       }
       break;
